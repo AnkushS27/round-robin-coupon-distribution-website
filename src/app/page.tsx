@@ -92,7 +92,7 @@ export default function ClaimPage() {
         if (data.nextClaimTime) {
           const nextClaim = new Date(data.nextClaimTime);
           setNextClaimTime(nextClaim);
-          setMessage(data.message);
+          setMessage(`You can claim again at ${nextClaim.toLocaleTimeString()}`);
         } else {
           setMessage(data.message);
         }
