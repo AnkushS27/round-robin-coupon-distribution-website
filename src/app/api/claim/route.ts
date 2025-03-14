@@ -34,7 +34,6 @@ export async function POST(req: NextRequest) {
         if (recentClaim) {
             const lastClaimedAt = recentClaim.claimedAt as Date;
             const nextClaimTime = new Date(lastClaimedAt.getTime() + ONE_HOUR_MS);
-            const timeRemaining = nextClaimTime.getTime() - Date.now();
 
             return NextResponse.json(
                 {

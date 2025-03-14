@@ -8,13 +8,19 @@ interface MongooseCache {
 
 // Use a global variable to cache the connection (necessary for Next.js hot reloading)
 declare global {
-  var _mongooseCache: MongooseCache | undefined;
+  namespace NodeJS {
+    interface Global {
+      _mongooseCache?: MongooseCache;
+    }
+  }
 }
 
-const cached: MongooseCache = global._mongooseCache || { conn: null, promise: null };
+// Ensure global._mongooseCache exists
+const globalCache = global as unknown as NodeJS.Global;
+const cached: MongooseCache = globalCache._mongooseCache || { conn: null, promise: null };
 
-if (!global._mongooseCache) {
-  global._mongooseCache = cached;
+if (!globalCache._mongooseCache) {
+  globalCache._mongooseCache = cached;
 }
 
 // Get the MongoDB URI from environment variables
@@ -40,14 +46,17 @@ async function connectToDatabase(): Promise<typeof mongoose> {
     };
 
     // Start a new connection promise
-    cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongooseInstance) => {
-      console.log('MongoDB connected successfully');
-      return mongooseInstance;
-    }).catch((err) => {
-      console.error('MongoDB connection error:', err);
-      cached.promise = null; // Reset promise on error to allow retry
-      throw err;
-    });
+    cached.promise = mongoose
+      .connect(MONGODB_URI as string, opts)
+      .then((mongooseInstance) => {
+        console.log('MongoDB connected successfully');
+        return mongooseInstance;
+      })
+      .catch((err) => {
+        console.error('MongoDB connection error:', err);
+        cached.promise = null; // Reset promise on error to allow retry
+        throw err;
+      });
   }
 
   try {
