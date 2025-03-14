@@ -6,21 +6,11 @@ interface MongooseCache {
   promise: Promise<typeof mongoose> | null;
 }
 
-// Use a global variable to cache the connection (necessary for Next.js hot reloading)
-declare global {
-  namespace NodeJS {
-    interface Global {
-      _mongooseCache?: MongooseCache;
-    }
-  }
-}
+// Use globalThis instead of namespace for caching (works well with Next.js hot reloading)
+const cached: MongooseCache = (globalThis as any)._mongooseCache || { conn: null, promise: null };
 
-// Ensure global._mongooseCache exists
-const globalCache = global as unknown as NodeJS.Global;
-const cached: MongooseCache = globalCache._mongooseCache || { conn: null, promise: null };
-
-if (!globalCache._mongooseCache) {
-  globalCache._mongooseCache = cached;
+if (!(globalThis as any)._mongooseCache) {
+  (globalThis as any)._mongooseCache = cached;
 }
 
 // Get the MongoDB URI from environment variables
